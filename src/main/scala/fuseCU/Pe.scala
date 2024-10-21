@@ -1,41 +1,26 @@
 package fuseCU
 
 import chisel3._
-import chisel3.util.Decoupled
 import agile.config._
 
-import scala.None
+class PeBundle (implicit p: Parameters) extends Bundle {
+  val dataWidth = p(WordWidth)
+  val supportXS = p(SupportXS)
 
-case object WordWidth extends Field[Int](32)
-case object SupportXS extends Field[Boolean](true)
-
-class PeXsConfig extends Config(
-  (site, here, tail) => {
-    case WordWidth => 16
-    case SupportXS => true
-  }
-)
-
-class PeIsConfig extends Config(
-  (site, here, tail) => {
-    case WordWidth => 16
-    case SupportXS => false
-  }
-)
+  val config = if (supportXS) Some(Input(Bool())) else None // true is OS, false is IS
+  val actIn = if (supportXS) Some(Input(UInt(dataWidth.W))) else None
+  val actOut = if (supportXS) Some(Output(UInt(dataWidth.W))) else None
+  val weightIn = Input(UInt(dataWidth.W))
+  val weightOut = Output(UInt(dataWidth.W))
+  val psumIn = Input(UInt(dataWidth.W))
+  val psumOut = Output(UInt(dataWidth.W))
+}
 
 class Pe(implicit p: Parameters) extends Module {
   val dataWidth = p(WordWidth)
   val supportXS = p(SupportXS)
 
-  val io = IO(new Bundle() {
-    val config = if (supportXS) Some(Input(Bool())) else None // true is OS, false is IS
-    val actIn = if (supportXS) Some(Input(UInt(dataWidth.W))) else None
-    val actOut = if (supportXS) Some(Output(UInt(dataWidth.W))) else None
-    val weightIn = Input(UInt(dataWidth.W))
-    val weightOut = Output(UInt(dataWidth.W))
-    val psumIn = Input(UInt(dataWidth.W))
-    val psumOut = Output(UInt(dataWidth.W))
-  })
+  val io = IO(new PeBundle())
 
   val actReg = RegInit(0.U(dataWidth.W))
   val weightReg = RegInit(0.U(dataWidth.W))
@@ -65,5 +50,5 @@ object PeGen extends App {
   val chiselArgs = Array("-X", "verilog", "-td", "verilog_gen_dir",
     "--emission-options", "disableMemRandomization,disableRegisterRandomization")
   (new chisel3.stage.ChiselStage).execute(
-    chiselArgs, Seq(ChiselGeneratorAnnotation(() => new Pe()(new PeIsConfig))))
+    chiselArgs, Seq(ChiselGeneratorAnnotation(() => new Pe()(new XsPeConfig))))
 }
