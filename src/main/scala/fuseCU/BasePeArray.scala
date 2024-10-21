@@ -4,8 +4,6 @@ import chisel3._
 import chisel3.util.Decoupled
 import agile.config._
 
-import scala.collection.mutable.ArrayBuffer
-
 class BasePeArray (implicit val p : Parameters) extends Module {
   val dataWidth = p(WordWidth)
   val supportXS = p(SupportXS)
@@ -22,21 +20,21 @@ class BasePeArray (implicit val p : Parameters) extends Module {
     val psumOut = Output(Vec(arrayDepth, UInt(dataWidth.W)))
   })
 
-  val peArray = Vector.fill(arrayDepth, arrayWidth)(Module(new Pe))
+  val pes = Vector.fill(arrayDepth, arrayWidth)(Module(new Pe))
   val seq0toW = (0 until  arrayWidth).toVector
   val seq0toD = (0 until  arrayDepth).toVector
   if (p(SupportXS)) {
-    seq0toD.foreach(i => peArray(i)(0).io.actIn.get := io.actIn.get(i))
-    seq0toD.foreach(i => io.actOut.get(i) := peArray(i)(arrayDepth-1).io.actOut.get)
-    seq0toD.foreach(i => (1 until arrayWidth).foreach(j => peArray(i)(j).io.actIn.get := peArray(i)(j-1).io.actOut.get))
-    seq0toD.foreach(i => seq0toW.foreach(j => peArray(i)(j).io.config.get := io.config.get))
+    seq0toD.foreach(i => pes(i)(0).io.actIn.get := io.actIn.get(i))
+    seq0toD.foreach(i => io.actOut.get(i) := pes(i)(arrayDepth-1).io.actOut.get)
+    seq0toD.foreach(i => (1 until arrayWidth).foreach(j => pes(i)(j).io.actIn.get := pes(i)(j-1).io.actOut.get))
+    seq0toD.foreach(i => seq0toW.foreach(j => pes(i)(j).io.config.get := io.config.get))
   }
-  seq0toD.foreach(i => peArray(i)(0).io.psumIn := io.psumIn(i))
-  seq0toD.foreach(i => io.psumOut(i) := peArray(i)(arrayDepth-1).io.psumOut)
-  seq0toW.foreach(i => peArray(0)(i).io.weightIn := io.wightIn(i))
-  seq0toW.foreach(i => io.wightOut(i) := peArray(arrayWidth-1)(i).io.psumOut)
-  seq0toD.foreach(i => (1 until arrayWidth).foreach(j => peArray(i)(j).io.psumIn := peArray(i)(j-1).io.psumOut))
-  seq0toW.foreach(i => (1 until arrayDepth).foreach(j => peArray(j)(i).io.weightIn := peArray(j-1)(i).io.weightOut))
+  seq0toD.foreach(i => pes(i)(0).io.psumIn := io.psumIn(i))
+  seq0toD.foreach(i => io.psumOut(i) := pes(i)(arrayDepth-1).io.psumOut)
+  seq0toW.foreach(i => pes(0)(i).io.weightIn := io.wightIn(i))
+  seq0toW.foreach(i => io.wightOut(i) := pes(arrayWidth-1)(i).io.psumOut)
+  seq0toD.foreach(i => (1 until arrayWidth).foreach(j => pes(i)(j).io.psumIn := pes(i)(j-1).io.psumOut))
+  seq0toW.foreach(i => (1 until arrayDepth).foreach(j => pes(j)(i).io.weightIn := pes(j-1)(i).io.weightOut))
 
 }
 
