@@ -11,7 +11,7 @@ class FuseCU(implicit val p: Parameters) extends Module {
   val arrayWidth = p(PeArraySize)._2
 
   val io = IO(new Bundle() {
-    val config = if (supportXS) Some(Input(Bool())) else None // true is OS, false is IS
+    val xsConfig = if (supportXS) Some(Input(Bool())) else None // true is OS, false is IS
     val weightFromRam = Input(Bool())
     val ioFromRam = Input(Bool())
     val fromRamWeight = Input(Vec(arrayWidth, UInt(dataWidth.W)))
@@ -25,13 +25,13 @@ class FuseCU(implicit val p: Parameters) extends Module {
   val basePeArray = Module(new BasePeArray())
   val actOrPsum = Mux(io.ioFromRam, io.fromRamIO, io.fromPeIO)
   if (supportXS) basePeArray.io.actIn.get := actOrPsum
-  if (supportXS) basePeArray.io.config.get := io.config.get
+  if (supportXS) basePeArray.io.xsConfig.get := io.xsConfig.get
   basePeArray.io.psumIn := actOrPsum
   basePeArray.io.wightIn := Mux(io.weightFromRam, io.fromRamWeight, io.fromPeWeight)
 
   io.outWeight := basePeArray.io.wightOut
   if (supportXS) {
-    io.outIO := Mux(io.config.get, basePeArray.io.actOut.get, basePeArray.io.psumOut)
+    io.outIO := Mux(io.xsConfig.get, basePeArray.io.actOut.get, basePeArray.io.psumOut)
   } else
     io.outIO := basePeArray.io.psumOut
 

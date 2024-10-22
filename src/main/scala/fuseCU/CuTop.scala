@@ -36,10 +36,10 @@ class CuTop(implicit val p: Parameters) extends Module {
       fuseCuArray(0).foreach(cu => cu.io.weightFromRam := true.B)
       (0 until cuArrayDepth).foreach(i => {
         (0 until cuArrayWidth / 2).foreach(j => {
-          fuseCuArray(i)(j).io.config.get := false.B
+          fuseCuArray(i)(j).io.xsConfig.get := false.B
         })
         (cuArrayWidth / 2 until cuArrayWidth).foreach(j => {
-          fuseCuArray(i)(j).io.config.get := true.B
+          fuseCuArray(i)(j).io.xsConfig.get := true.B
         })
       })
     }.elsewhen(io.execMode === 1.U) {
@@ -47,29 +47,29 @@ class CuTop(implicit val p: Parameters) extends Module {
       fuseCuArray(cuArrayDepth / 2).foreach(cu => cu.io.weightFromRam := true.B)
       (0 until cuArrayDepth / 2).foreach(i =>
         (0 until cuArrayWidth).foreach(j => {
-          fuseCuArray(i)(j).io.config.get := false.B
+          fuseCuArray(i)(j).io.xsConfig.get := false.B
         }))
       (cuArrayDepth / 2 until cuArrayDepth).foreach(i =>
         (0 until (cuArrayWidth)).foreach(j => {
-          fuseCuArray(i)(j).io.config.get := true.B
+          fuseCuArray(i)(j).io.xsConfig.get := true.B
         }))
     }.otherwise {
       (cuArrayWidth / 2 until (cuArrayWidth)).foreach(j =>
         fuseCuArray(0)(j).io.weightFromRam := true.B)
       (0 until cuArrayDepth).foreach(i => {
         ((0 until cuArrayWidth / 4) ++ (cuArrayWidth / 2 until 3 * cuArrayWidth / 4)).foreach(j =>
-          fuseCuArray(i)(j).io.config.get := false.B)
+          fuseCuArray(i)(j).io.xsConfig.get := false.B)
         ((cuArrayWidth / 4 until cuArrayWidth / 2) ++ (3 * cuArrayWidth / 4 until cuArrayWidth)).foreach(j =>
-          fuseCuArray(i)(j).io.config.get := true.B)
+          fuseCuArray(i)(j).io.xsConfig.get := true.B)
       })
     }
   }.elsewhen(io.xsMode === 1.U) {
     fuseCuArray(0).foreach(cu => cu.io.weightFromRam := true.B)
     (0 until cuArrayDepth).foreach(i => fuseCuArray(i)(0).io.ioFromRam := true.B)
-    fuseCuArray.foreach(_.foreach(_.io.config.get := true.B))
+    fuseCuArray.foreach(_.foreach(_.io.xsConfig.get := true.B))
   }.otherwise {
     fuseCuArray(0).foreach(cu => cu.io.weightFromRam := true.B)
-    fuseCuArray.foreach(_.foreach(_.io.config.get := false.B))
+    fuseCuArray.foreach(_.foreach(_.io.xsConfig.get := false.B))
   }
 
   // PE port

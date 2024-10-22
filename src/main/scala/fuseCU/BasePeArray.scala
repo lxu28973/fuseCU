@@ -11,7 +11,7 @@ class BasePeArray (implicit val p : Parameters) extends Module {
   val arrayWidth = p(PeArraySize)._2
 
   val io = IO(new Bundle() {
-    val config = if (supportXS) Some(Input(Bool())) else None // true is OS, false is IS
+    val xsConfig = if (supportXS) Some(Input(Bool())) else None // true is OS, false is IS
     val actIn =  if (supportXS) Some(Input(Vec(arrayDepth,UInt(dataWidth.W)))) else None
     val actOut = if (supportXS) Some(Output(Vec(arrayDepth, UInt(dataWidth.W)))) else None
     val wightIn = Input(Vec(arrayWidth, UInt(dataWidth.W)))
@@ -27,7 +27,7 @@ class BasePeArray (implicit val p : Parameters) extends Module {
     seq0toD.foreach(i => pes(i)(0).io.actIn.get := io.actIn.get(i))
     seq0toD.foreach(i => io.actOut.get(i) := pes(i)(arrayDepth-1).io.actOut.get)
     seq0toD.foreach(i => (1 until arrayWidth).foreach(j => pes(i)(j).io.actIn.get := pes(i)(j-1).io.actOut.get))
-    seq0toD.foreach(i => seq0toW.foreach(j => pes(i)(j).io.config.get := io.config.get))
+    seq0toD.foreach(i => seq0toW.foreach(j => pes(i)(j).io.xsConfig.get := io.xsConfig.get))
   }
   seq0toD.foreach(i => pes(i)(0).io.psumIn := io.psumIn(i))
   seq0toD.foreach(i => io.psumOut(i) := pes(i)(arrayDepth-1).io.psumOut)
