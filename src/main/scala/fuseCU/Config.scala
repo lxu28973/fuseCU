@@ -12,7 +12,7 @@ case object CuArraySize extends Field[Tuple2[Int, Int]]((4, 4))
 
 class WithBasePeConfig extends Config(
   (site, here, tail) => {
-    case WordWidth => 16
+    case WordWidth => 8
     case PeArraySize => (64, 64)
   }
 )

@@ -15,9 +15,9 @@ class BasePeArray (implicit val p : Parameters) extends Module {
     val actIn =  if (supportXS) Some(Input(Vec(arrayDepth,UInt(dataWidth.W)))) else None
     val actOut = if (supportXS) Some(Output(Vec(arrayDepth, UInt(dataWidth.W)))) else None
     val wightIn = Input(Vec(arrayWidth, UInt(dataWidth.W)))
-    val psumIn = Input(Vec(arrayDepth, UInt(dataWidth.W)))
+    val psumIn = Input(Vec(arrayDepth, UInt((4*dataWidth).W)))
     val wightOut = Output(Vec(arrayWidth,UInt(dataWidth.W)))
-    val psumOut = Output(Vec(arrayDepth, UInt(dataWidth.W)))
+    val psumOut = Output(Vec(arrayDepth, UInt((4*dataWidth).W)))
   })
 
   val pes = Vector.fill(arrayDepth, arrayWidth)(Module(new Pe))
@@ -32,7 +32,7 @@ class BasePeArray (implicit val p : Parameters) extends Module {
   seq0toD.foreach(i => pes(i)(0).io.psumIn := io.psumIn(i))
   seq0toD.foreach(i => io.psumOut(i) := pes(i)(arrayDepth-1).io.psumOut)
   seq0toW.foreach(i => pes(0)(i).io.weightIn := io.wightIn(i))
-  seq0toW.foreach(i => io.wightOut(i) := pes(arrayWidth-1)(i).io.psumOut)
+  seq0toW.foreach(i => io.wightOut(i) := pes(arrayWidth-1)(i).io.weightOut)
   seq0toD.foreach(i => (1 until arrayWidth).foreach(j => pes(i)(j).io.psumIn := pes(i)(j-1).io.psumOut))
   seq0toW.foreach(i => (1 until arrayDepth).foreach(j => pes(j)(i).io.weightIn := pes(j-1)(i).io.weightOut))
 
