@@ -7,8 +7,8 @@ import agile.config._
 class BasePeArray (implicit val p : Parameters) extends Module {
   val dataWidth = p(WordWidth)
   val supportXS = p(SupportXS)
-  val arrayDepth = p(ArraySize)._1
-  val arrayWidth = p(ArraySize)._2
+  val arrayDepth = p(PeArraySize)._1
+  val arrayWidth = p(PeArraySize)._2
 
   val io = IO(new Bundle() {
     val config = if (supportXS) Some(Input(Bool())) else None // true is OS, false is IS
