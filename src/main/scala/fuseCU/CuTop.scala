@@ -4,6 +4,19 @@ import chisel3._
 import chisel3.util._
 import agile.config._
 
+class CuTopIO (implicit val p:Parameters) extends Bundle {
+  val dataWidth = p(WordWidth)
+  val peArrayDepth = p(PeArraySize)._1
+  val peArrayWidth = p(PeArraySize)._2
+  val cuArrayDepth = p(CuArraySize)._1
+  val cuArrayWidth = p(CuArraySize)._2
+
+  val execMode = Input(UInt(2.W)) // 0: 2x2; 1: 1x4; 2: 4x1
+  val xsMode = Input(UInt(2.W)) // 0: ISOS fusion; 1: OS; 2: IS
+  val quant = Input(UInt((log2Ceil(4 * dataWidth)).W))
+  val ramReadPorts = Input(Vec(peArrayWidth * cuArrayWidth + peArrayDepth * cuArrayDepth, UInt(dataWidth.W)))
+  val ramWritePorts = Output(Vec(peArrayWidth * cuArrayWidth + peArrayDepth * cuArrayDepth, UInt(dataWidth.W)))
+}
 
 class CuTop(implicit val p: Parameters) extends Module {
   val dataWidth = p(WordWidth)
@@ -14,13 +27,7 @@ class CuTop(implicit val p: Parameters) extends Module {
   assert(cuArrayWidth == cuArrayDepth)
   assert(peArrayWidth == peArrayDepth)
 
-  val io = IO(new Bundle() {
-    val execMode = Input(UInt(2.W)) // 0: 2x2; 1: 1x4; 2: 4x1
-    val xsMode = Input(UInt(2.W)) // 0: ISOS fusion; 1: OS; 2: IS
-    val quant = Input(UInt((log2Ceil(4 * dataWidth)).W))
-    val ramReadPorts = Input(Vec(peArrayWidth * cuArrayWidth + peArrayDepth * cuArrayDepth, UInt(dataWidth.W)))
-    val ramWritePorts = Output(Vec(peArrayWidth * cuArrayWidth + peArrayDepth * cuArrayDepth, UInt(dataWidth.W)))
-  })
+  val io = IO(new CuTopIO)
 
   assert((io.xsMode =/= 0.U & io.execMode === 0.U) | io.xsMode === 0.U)
 
