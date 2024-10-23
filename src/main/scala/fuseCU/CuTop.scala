@@ -31,9 +31,14 @@ class CuTop(implicit val p: Parameters) extends Module {
 
   assert((io.xsMode =/= 0.U & io.execMode === 0.U) | io.xsMode === 0.U)
 
+  val execMode = RegNext(io.execMode) // 0: 2x2; 1: 1x4; 2: 4x1
+  val xsMode = RegNext(io.xsMode) // 0: ISOS fusion; 1: OS; 2: IS
+  val quant = RegNext(io.quant)
+  val ramReadPorts = RegNext(io.ramReadPorts)
+
   val fuseCuArray = Vector.fill(cuArrayDepth, cuArrayWidth)(Module(new FuseCU()))
 
-  fuseCuArray.foreach(_.foreach(_.io.quant := io.quant))
+  fuseCuArray.foreach(_.foreach(_.io.quant := quant))
 
   (0 until cuArrayDepth).foreach(i =>
     (0 until cuArrayWidth).foreach(j => {
@@ -42,8 +47,8 @@ class CuTop(implicit val p: Parameters) extends Module {
       fuseCuArray(i)(j).io.psumFromRam := false.B
     }))
 
-  when(io.xsMode === 0.U) {
-    when(io.execMode === 0.U) {
+  when(xsMode === 0.U) {
+    when(execMode === 0.U) {
       fuseCuArray(0).foreach(cu => cu.io.weightFromRam := true.B)
       (0 until cuArrayDepth).foreach(i => {
         (0 until cuArrayWidth / 2).foreach(j => {
@@ -53,7 +58,7 @@ class CuTop(implicit val p: Parameters) extends Module {
           fuseCuArray(i)(j).io.xsConfig.get := true.B
         })
       })
-    }.elsewhen(io.execMode === 1.U) {
+    }.elsewhen(execMode === 1.U) {
       fuseCuArray(0).foreach(cu => cu.io.weightFromRam := true.B)
       fuseCuArray(cuArrayDepth / 2).foreach(cu => cu.io.weightFromRam := true.B)
       (0 until cuArrayDepth / 2).foreach(i =>
@@ -74,7 +79,7 @@ class CuTop(implicit val p: Parameters) extends Module {
           fuseCuArray(i)(j).io.xsConfig.get := true.B)
       })
     }
-  }.elsewhen(io.xsMode === 1.U) {
+  }.elsewhen(xsMode === 1.U) {
     fuseCuArray(0).foreach(cu => cu.io.weightFromRam := true.B)
     (0 until cuArrayDepth).foreach(i => fuseCuArray(i)(0).io.actFromRam := true.B)
     fuseCuArray.foreach(_.foreach(_.io.xsConfig.get := true.B))
@@ -110,20 +115,20 @@ class CuTop(implicit val p: Parameters) extends Module {
     cu.io.fromRamWeight := DontCare
   }))
   (0 until cuArrayWidth).foreach(i => (0 until peArrayWidth).foreach(j =>
-    fuseCuArray(0)(i).io.fromRamWeight(j) := io.ramReadPorts(i * peArrayWidth + j)))
+    fuseCuArray(0)(i).io.fromRamWeight(j) := ramReadPorts(i * peArrayWidth + j)))
   (0 until cuArrayWidth).foreach(i => (0 until peArrayWidth).foreach(j =>
     fuseCuArray(cuArrayDepth / 2)(i).io.fromRamWeight(j) :=
-      io.ramReadPorts(peArrayWidth * cuArrayWidth + i * peArrayWidth + j)))
+      ramReadPorts(peArrayWidth * cuArrayWidth + i * peArrayWidth + j)))
   (0 until cuArrayDepth).foreach(i => (0 until peArrayDepth).foreach(j =>
-    fuseCuArray(i)(cuArrayWidth / 2).io.fromRamAct(j) := io.ramReadPorts(i * peArrayDepth + j)))
+    fuseCuArray(i)(cuArrayWidth / 2).io.fromRamAct(j) := ramReadPorts(i * peArrayDepth + j)))
   (0 until cuArrayDepth).foreach(i => (0 until peArrayDepth).foreach(j =>
     fuseCuArray(i)(0).io.fromRamAct(j) :=
-      io.ramReadPorts(peArrayDepth * cuArrayDepth + i * peArrayDepth + j)))
+      ramReadPorts(peArrayDepth * cuArrayDepth + i * peArrayDepth + j)))
   (0 until cuArrayDepth).foreach(i => (0 until peArrayDepth).foreach(j =>
-    fuseCuArray(i)(cuArrayWidth / 2).io.fromRamPsum(j) := io.ramReadPorts(i * peArrayDepth + j)))
+    fuseCuArray(i)(cuArrayWidth / 2).io.fromRamPsum(j) := ramReadPorts(i * peArrayDepth + j)))
   (0 until cuArrayDepth).foreach(i => (0 until peArrayDepth).foreach(j =>
     fuseCuArray(i)(0).io.fromRamPsum(j) :=
-      io.ramReadPorts(peArrayDepth * cuArrayDepth + i * peArrayDepth + j)))
+      ramReadPorts(peArrayDepth * cuArrayDepth + i * peArrayDepth + j)))
 
   (0 until cuArrayDepth).foreach(i => (0 until peArrayDepth).foreach(j =>
     io.ramWritePorts(i * peArrayDepth + j) := fuseCuArray(i)(cuArrayWidth / 2 - 1).io.outAct(j)))

@@ -20,18 +20,23 @@ class BasePeArray (implicit val p : Parameters) extends Module {
     val psumOut = Output(Vec(arrayDepth, UInt((4*dataWidth).W)))
   })
 
+  val xsConfig = if (supportXS) Some(RegNext(io.xsConfig.get)) else None // true is OS, false is IS
+  val actIn =  if (supportXS) Some(RegNext(io.actIn.get)) else None
+  val wightIn = RegNext(io.wightIn)
+  val psumIn = RegNext(io.psumIn)
+
   val pes = Vector.fill(arrayDepth, arrayWidth)(Module(new Pe))
   val seq0toW = (0 until  arrayWidth).toVector
   val seq0toD = (0 until  arrayDepth).toVector
   if (p(SupportXS)) {
-    seq0toD.foreach(i => pes(i)(0).io.actIn.get := io.actIn.get(i))
+    seq0toD.foreach(i => pes(i)(0).io.actIn.get := actIn.get(i))
     seq0toD.foreach(i => io.actOut.get(i) := pes(i)(arrayDepth-1).io.actOut.get)
     seq0toD.foreach(i => (1 until arrayWidth).foreach(j => pes(i)(j).io.actIn.get := pes(i)(j-1).io.actOut.get))
-    seq0toD.foreach(i => seq0toW.foreach(j => pes(i)(j).io.xsConfig.get := io.xsConfig.get))
+    seq0toD.foreach(i => seq0toW.foreach(j => pes(i)(j).io.xsConfig.get := xsConfig.get))
   }
-  seq0toD.foreach(i => pes(i)(0).io.psumIn := io.psumIn(i))
+  seq0toD.foreach(i => pes(i)(0).io.psumIn := psumIn(i))
   seq0toD.foreach(i => io.psumOut(i) := pes(i)(arrayDepth-1).io.psumOut)
-  seq0toW.foreach(i => pes(0)(i).io.weightIn := io.wightIn(i))
+  seq0toW.foreach(i => pes(0)(i).io.weightIn := wightIn(i))
   seq0toW.foreach(i => io.wightOut(i) := pes(arrayWidth-1)(i).io.weightOut)
   seq0toD.foreach(i => (1 until arrayWidth).foreach(j => pes(i)(j).io.psumIn := pes(i)(j-1).io.psumOut))
   seq0toW.foreach(i => (1 until arrayDepth).foreach(j => pes(j)(i).io.weightIn := pes(j-1)(i).io.weightOut))
