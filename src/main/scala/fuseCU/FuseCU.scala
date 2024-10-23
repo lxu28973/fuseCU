@@ -13,6 +13,7 @@ class FuseCU(implicit val p: Parameters) extends Module {
   val io = IO(new Bundle() {
     val xsConfig = if (supportXS) Some(Input(Bool())) else None // true is OS, false is IS
     val quant = Input(UInt((log2Ceil(4 * dataWidth)).W))
+
     val weightFromRam = Input(Bool())
     val actFromRam = Input(Bool())
     val psumFromRam = Input(Bool())
@@ -27,20 +28,23 @@ class FuseCU(implicit val p: Parameters) extends Module {
     val outPsum = Output(Vec(arrayDepth, UInt((4 * dataWidth).W)))
   })
 
+  val xsConfig = if (supportXS) Some(RegNext(io.xsConfig.get)) else None // true is OS, false is IS
+  val quant = RegNext(io.quant)
+
   val basePeArray = Module(new BasePeArray())
   val act = Mux(io.actFromRam, io.fromRamAct, io.fromPeAct)
   if (supportXS) basePeArray.io.actIn.get := act
   val psum = Mux(io.psumFromRam, io.fromRamPsum, io.fromPePsum)
-  if (supportXS) basePeArray.io.xsConfig.get := io.xsConfig.get
+  if (supportXS) basePeArray.io.xsConfig.get := xsConfig.get
   basePeArray.io.psumIn := psum
   basePeArray.io.wightIn := Mux(io.weightFromRam, io.fromRamWeight, io.fromPeWeight)
 
   io.outWeight := basePeArray.io.wightOut
 
   val quantPsum = Wire(Vec(arrayDepth,UInt(dataWidth.W)))
-  (0 until arrayDepth).foreach(i => quantPsum(i) := basePeArray.io.psumOut(0) >> io.quant)
+  (0 until arrayDepth).foreach(i => quantPsum(i) := basePeArray.io.psumOut(0) >> quant)
   if (supportXS) {
-    io.outAct := Mux(io.xsConfig.get, basePeArray.io.actOut.get, quantPsum)
+    io.outAct := Mux(xsConfig.get, basePeArray.io.actOut.get, quantPsum)
   }
   io.outPsum := basePeArray.io.psumOut
 
