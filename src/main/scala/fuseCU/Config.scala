@@ -3,12 +3,18 @@ package fuseCU
 import agile.config._
 
 case object WordWidth extends Field[Int](32)
-
 case object SupportXS extends Field[Boolean](true)
-
 case object PeArraySize extends Field[Tuple2[Int, Int]]((64, 64))
-
 case object CuArraySize extends Field[Tuple2[Int, Int]]((4, 4))
+case object SigWidth extends Field[Int](23)
+case object ExpWidth extends Field[Int](8)
+
+class WithFP32Config extends Config(
+  (site, here, tail) => {
+    case SigWidth => 23
+    case ExpWidth => 8
+  }
+)
 
 class WithBasePeConfig extends Config(
   (site, here, tail) => {
