@@ -18,7 +18,6 @@ class SoftMax(implicit val p: Parameters) extends Module {
   val maxReg = RegInit(0.asSInt(dataWidth.W))
   val subInReg = RegInit(0.asSInt(dataWidth.W))
   val subOutReg = RegInit(0.asSInt(dataWidth.W))
-  val expReg = RegInit(0.asSInt(dataWidth.W))
 
   val dataQueue = Reg(Vec(peArrayWidth, SInt(dataWidth.W)))
 
@@ -36,16 +35,18 @@ class SoftMax(implicit val p: Parameters) extends Module {
   subOutReg := dataQueue(peArrayWidth - 1) - subInReg
 
   val i2fltUnit = Module(new DW_fp_i2flt)
+  val i2fltReg = RegNext(i2fltUnit.io.z)
   val expUnit = Module(new DW_fp_exp)
+  val expReg = RegNext(expUnit.io.z)
   val flt2iUnit = Module(new DW_fp_flt2i)
+  val flt2iReg = RegNext(flt2iUnit.io.z)
   i2fltUnit.io.rnd := 0.U
   flt2iUnit.io.rnd := 0.U
   i2fltUnit.io.a := subOutReg
-  expUnit.io.a := i2fltUnit.io.z
-  flt2iUnit.io.a := expUnit.io.z
-  expReg := flt2iUnit.io.z
+  expUnit.io.a := i2fltReg
+  flt2iUnit.io.a := expReg
 
-  io.dataOut := expReg
+  io.dataOut := flt2iReg
 
 }
 
