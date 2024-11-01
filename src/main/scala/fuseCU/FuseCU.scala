@@ -17,15 +17,15 @@ class FuseCU(implicit val p: Parameters) extends Module {
     val weightFromRam = Input(Bool())
     val actFromRam = Input(Bool())
     val psumFromRam = Input(Bool())
-    val fromRamWeight = Input(Vec(arrayWidth, UInt(dataWidth.W)))
-    val fromPeWeight = Input(Vec(arrayWidth, UInt(dataWidth.W)))
-    val fromRamAct = Input(Vec(arrayDepth, UInt(dataWidth.W)))
-    val fromPeAct = Input(Vec(arrayDepth, UInt(dataWidth.W)))
-    val fromRamPsum = Input(Vec(arrayDepth, UInt((4 * dataWidth).W)))
-    val fromPePsum = Input(Vec(arrayDepth, UInt((4 * dataWidth).W)))
-    val outWeight = Output(Vec(arrayWidth, UInt(dataWidth.W)))
-    val outAct = Output(Vec(arrayDepth, UInt(dataWidth.W)))
-    val outPsum = Output(Vec(arrayDepth, UInt((4 * dataWidth).W)))
+    val fromRamWeight = Input(Vec(arrayWidth, SInt(dataWidth.W)))
+    val fromPeWeight = Input(Vec(arrayWidth, SInt(dataWidth.W)))
+    val fromRamAct = Input(Vec(arrayDepth, SInt(dataWidth.W)))
+    val fromPeAct = Input(Vec(arrayDepth, SInt(dataWidth.W)))
+    val fromRamPsum = Input(Vec(arrayDepth, SInt((4 * dataWidth).W)))
+    val fromPePsum = Input(Vec(arrayDepth, SInt((4 * dataWidth).W)))
+    val outWeight = Output(Vec(arrayWidth, SInt(dataWidth.W)))
+    val outAct = Output(Vec(arrayDepth, SInt(dataWidth.W)))
+    val outPsum = Output(Vec(arrayDepth, SInt((4 * dataWidth).W)))
   })
 
   val xsConfig = if (supportXS) Some(RegNext(io.xsConfig.get)) else None // true is OS, false is IS
@@ -41,7 +41,7 @@ class FuseCU(implicit val p: Parameters) extends Module {
 
   io.outWeight := basePeArray.io.wightOut
 
-  val quantPsum = Wire(Vec(arrayDepth,UInt(dataWidth.W)))
+  val quantPsum = Wire(Vec(arrayDepth,SInt(dataWidth.W)))
   (0 until arrayDepth).foreach(i => quantPsum(i) := basePeArray.io.psumOut(0) >> quant)
   if (supportXS) {
     io.outAct := Mux(xsConfig.get, basePeArray.io.actOut.get, quantPsum)

@@ -8,12 +8,12 @@ class PeBundle (implicit p: Parameters) extends Bundle {
   val supportXS = p(SupportXS)
 
   val xsConfig = if (supportXS) Some(Input(Bool())) else None // true is OS, false is IS
-  val actIn = if (supportXS) Some(Input(UInt(dataWidth.W))) else None
-  val actOut = if (supportXS) Some(Output(UInt(dataWidth.W))) else None
-  val weightIn = Input(UInt(dataWidth.W))
-  val weightOut = Output(UInt(dataWidth.W))
-  val psumIn = Input(UInt((4*dataWidth).W))
-  val psumOut = Output(UInt((4*dataWidth).W))
+  val actIn = if (supportXS) Some(Input(SInt(dataWidth.W))) else None
+  val actOut = if (supportXS) Some(Output(SInt(dataWidth.W))) else None
+  val weightIn = Input(SInt(dataWidth.W))
+  val weightOut = Output(SInt(dataWidth.W))
+  val psumIn = Input(SInt((4*dataWidth).W))
+  val psumOut = Output(SInt((4*dataWidth).W))
 }
 
 class Pe(implicit p: Parameters) extends Module {
@@ -22,9 +22,9 @@ class Pe(implicit p: Parameters) extends Module {
 
   val io = IO(new PeBundle())
 
-  val actReg = RegInit(0.U(dataWidth.W))
-  val weightReg = RegInit(0.U(dataWidth.W))
-  val psumReg = RegInit(0.U((4*dataWidth).W))
+  val actReg = RegInit(0.S(dataWidth.W))
+  val weightReg = RegInit(0.S(dataWidth.W))
+  val psumReg = RegInit(0.S((4*dataWidth).W))
 
   val actFrom = if (supportXS) Mux(io.xsConfig.get, io.actIn.get, actReg) else actReg
   val psumFrom = if (supportXS) Mux(io.xsConfig.get, psumReg, io.psumIn) else io.psumIn

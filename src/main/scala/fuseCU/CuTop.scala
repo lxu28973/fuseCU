@@ -15,8 +15,8 @@ class CuTopIO (implicit val p:Parameters) extends Bundle {
   val xsMode = Input(UInt(2.W)) // 0: ISOS fusion; 1: OS; 2: IS
   val quant = Input(UInt((log2Ceil(4 * dataWidth)).W))
 
-  val ramReadPorts = Input(Vec(peArrayWidth * cuArrayWidth + peArrayDepth * cuArrayDepth, UInt(dataWidth.W)))
-  val ramWritePorts = Output(Vec(peArrayWidth * cuArrayWidth + peArrayDepth * cuArrayDepth, UInt(dataWidth.W)))
+  val ramReadPorts = Input(Vec(peArrayWidth * cuArrayWidth + peArrayDepth * cuArrayDepth, SInt(dataWidth.W)))
+  val ramWritePorts = Output(Vec(peArrayWidth * cuArrayWidth + peArrayDepth * cuArrayDepth, SInt(dataWidth.W)))
 }
 
 class CuTop(implicit val p: Parameters) extends Module {

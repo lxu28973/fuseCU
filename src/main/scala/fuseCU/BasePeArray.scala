@@ -12,12 +12,12 @@ class BasePeArray (implicit val p : Parameters) extends Module {
 
   val io = IO(new Bundle() {
     val xsConfig = if (supportXS) Some(Input(Bool())) else None // true is OS, false is IS
-    val actIn =  if (supportXS) Some(Input(Vec(arrayDepth,UInt(dataWidth.W)))) else None
-    val actOut = if (supportXS) Some(Output(Vec(arrayDepth, UInt(dataWidth.W)))) else None
-    val wightIn = Input(Vec(arrayWidth, UInt(dataWidth.W)))
-    val psumIn = Input(Vec(arrayDepth, UInt((4*dataWidth).W)))
-    val wightOut = Output(Vec(arrayWidth,UInt(dataWidth.W)))
-    val psumOut = Output(Vec(arrayDepth, UInt((4*dataWidth).W)))
+    val actIn =  if (supportXS) Some(Input(Vec(arrayDepth,SInt(dataWidth.W)))) else None
+    val actOut = if (supportXS) Some(Output(Vec(arrayDepth, SInt(dataWidth.W)))) else None
+    val wightIn = Input(Vec(arrayWidth, SInt(dataWidth.W)))
+    val psumIn = Input(Vec(arrayDepth, SInt((4*dataWidth).W)))
+    val wightOut = Output(Vec(arrayWidth,SInt(dataWidth.W)))
+    val psumOut = Output(Vec(arrayDepth, SInt((4*dataWidth).W)))
   })
 
   val xsConfig = if (supportXS) Some(RegNext(io.xsConfig.get)) else None // true is OS, false is IS
@@ -44,8 +44,8 @@ object BasePeArrayGen extends App {
   import chisel3.stage.{ChiselStage, ChiselGeneratorAnnotation}
 
   // use "--help" to see more options
-  val chiselArgs = Array("-X", "verilog", "-td", "verilog_gen_dir",
+  val chiselArgs = Array("-X", "verilog", "-td", "verilog_gen_dir", "-e", "verilog",
     "--emission-options", "disableMemRandomization,disableRegisterRandomization")
   (new chisel3.stage.ChiselStage).execute(
-    chiselArgs, Seq(ChiselGeneratorAnnotation(() => new BasePeArray()(new XsPeConfig))))
+    chiselArgs, Seq(ChiselGeneratorAnnotation(() => new BasePeArray()(new IsPeConfig))))
 }
