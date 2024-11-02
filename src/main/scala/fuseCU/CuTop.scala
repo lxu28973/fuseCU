@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util._
 import agile.config._
 
-class CuTopIO (implicit val p:Parameters) extends Bundle {
+class CuTopIO(implicit val p: Parameters) extends Bundle {
   val dataWidth = p(WordWidth)
   val peArrayDepth = p(PeArraySize)._1
   val peArrayWidth = p(PeArraySize)._2
@@ -15,6 +15,7 @@ class CuTopIO (implicit val p:Parameters) extends Bundle {
   val xsMode = Input(UInt(2.W)) // 0: ISOS fusion; 1: OS; 2: IS
   val quant = Input(UInt((log2Ceil(4 * dataWidth)).W))
 
+  val init = Input(Vec(peArrayWidth * cuArrayWidth + peArrayDepth * cuArrayDepth, Bool()))
   val ramReadPorts = Input(Vec(peArrayWidth * cuArrayWidth + peArrayDepth * cuArrayDepth, SInt(dataWidth.W)))
   val ramWritePorts = Output(Vec(peArrayWidth * cuArrayWidth + peArrayDepth * cuArrayDepth, SInt(dataWidth.W)))
 }
@@ -47,6 +48,11 @@ class CuTop(implicit val p: Parameters) extends Module {
       fuseCuArray(i)(j).io.psumFromRam := false.B
     }))
 
+  (0 until cuArrayDepth).foreach(i => (1 until cuArrayWidth).foreach(j =>
+    fuseCuArray(i)(j).io.initIn := fuseCuArray(i)(j - 1).io.initOut))
+  (0 until cuArrayDepth).foreach(i => (0 until peArrayDepth).foreach(j =>
+    fuseCuArray(i)(0).io.initIn(j) := io.init(peArrayDepth * cuArrayDepth + i * peArrayDepth + j)))
+
   when(xsMode === 0.U) {
     when(execMode === 0.U) {
       fuseCuArray(0).foreach(cu => cu.io.weightFromRam := true.B)
@@ -69,6 +75,8 @@ class CuTop(implicit val p: Parameters) extends Module {
         (0 until (cuArrayWidth)).foreach(j => {
           fuseCuArray(i)(j).io.xsConfig.get := true.B
         }))
+      (0 until cuArrayDepth / 2).foreach(i =>
+        fuseCuArray(i + cuArrayDepth / 2)(0).io.initIn := fuseCuArray(i)(cuArrayWidth - 1).io.initOut)
     }.otherwise {
       (cuArrayWidth / 2 until (cuArrayWidth)).foreach(j =>
         fuseCuArray(0)(j).io.weightFromRam := true.B)
@@ -78,6 +86,8 @@ class CuTop(implicit val p: Parameters) extends Module {
         ((cuArrayWidth / 4 until cuArrayWidth / 2) ++ (3 * cuArrayWidth / 4 until cuArrayWidth)).foreach(j =>
           fuseCuArray(i)(j).io.xsConfig.get := true.B)
       })
+      (0 until cuArrayDepth).foreach(i => (0 until peArrayDepth).foreach(j =>
+        fuseCuArray(i)(cuArrayWidth / 2).io.initIn(j) := io.init(i * peArrayDepth + j)))
     }
   }.elsewhen(xsMode === 1.U) {
     fuseCuArray(0).foreach(cu => cu.io.weightFromRam := true.B)

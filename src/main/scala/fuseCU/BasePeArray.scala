@@ -12,8 +12,10 @@ class BasePeArray (implicit val p : Parameters) extends Module {
 
   val io = IO(new Bundle() {
     val xsConfig = if (supportXS) Some(Input(Bool())) else None // true is OS, false is IS
-    val actIn =  if (supportXS) Some(Input(Vec(arrayDepth,SInt(dataWidth.W)))) else None
-    val actOut = if (supportXS) Some(Output(Vec(arrayDepth, SInt(dataWidth.W)))) else None
+    val initIn = Input(Vec(arrayDepth, Bool()))
+    val initOut = Output(Vec(arrayDepth, Bool()))
+    val actIn = Input(Vec(arrayDepth,SInt(dataWidth.W)))
+    val actOut = Output(Vec(arrayDepth, SInt(dataWidth.W)))
     val wightIn = Input(Vec(arrayWidth, SInt(dataWidth.W)))
     val psumIn = Input(Vec(arrayDepth, SInt((4*dataWidth).W)))
     val wightOut = Output(Vec(arrayWidth,SInt(dataWidth.W)))
@@ -25,17 +27,18 @@ class BasePeArray (implicit val p : Parameters) extends Module {
   val pes = Vector.fill(arrayDepth, arrayWidth)(Module(new Pe))
   val seq0toW = (0 until  arrayWidth).toVector
   val seq0toD = (0 until  arrayDepth).toVector
-  if (p(SupportXS)) {
-    seq0toD.foreach(i => pes(i)(0).io.actIn.get := io.actIn.get(i))
-    seq0toD.foreach(i => io.actOut.get(i) := pes(i)(arrayDepth-1).io.actOut.get)
-    seq0toD.foreach(i => (1 until arrayWidth).foreach(j => pes(i)(j).io.actIn.get := pes(i)(j-1).io.actOut.get))
-    seq0toD.foreach(i => seq0toW.foreach(j => pes(i)(j).io.xsConfig.get := xsConfig.get))
-  }
+  seq0toD.foreach(i => pes(i)(0).io.actIn := io.actIn(i))
+  seq0toD.foreach(i => io.actOut(i) := pes(i)(arrayDepth-1).io.actOut)
+  seq0toD.foreach(i => (1 until arrayWidth).foreach(j => pes(i)(j).io.actIn:= pes(i)(j-1).io.actOut))
+  seq0toD.foreach(i => seq0toW.foreach(j => pes(i)(j).io.xsConfig.get := xsConfig.get))
   seq0toD.foreach(i => pes(i)(0).io.psumIn := io.psumIn(i))
+  seq0toD.foreach(i => pes(i)(0).io.initIn := io.initIn(i))
   seq0toD.foreach(i => io.psumOut(i) := pes(i)(arrayDepth-1).io.psumOut)
+  seq0toD.foreach(i => io.initOut(i) := pes(i)(arrayDepth-1).io.initOut)
   seq0toW.foreach(i => pes(0)(i).io.weightIn := io.wightIn(i))
   seq0toW.foreach(i => io.wightOut(i) := pes(arrayWidth-1)(i).io.weightOut)
   seq0toD.foreach(i => (1 until arrayWidth).foreach(j => pes(i)(j).io.psumIn := pes(i)(j-1).io.psumOut))
+  seq0toD.foreach(i => (1 until arrayWidth).foreach(j => pes(i)(j).io.initIn := pes(i)(j-1).io.initOut))
   seq0toW.foreach(i => (1 until arrayDepth).foreach(j => pes(j)(i).io.weightIn := pes(j-1)(i).io.weightOut))
 
 }
