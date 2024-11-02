@@ -58,7 +58,7 @@ class Pe(implicit p: Parameters) extends Module {
       }
     } else {
       psumReg := 0.S
-      actReg := actFrom
+      actReg := io.actIn
       weightReg := 0.S
     }
   }
