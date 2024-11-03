@@ -19,7 +19,7 @@ class WithFP32Config extends Config(
 class WithBasePeConfig extends Config(
   (site, here, tail) => {
     case WordWidth => 8
-    case PeArraySize => (64, 64)
+    case PeArraySize => (128, 128)
   }
 )
 
@@ -47,7 +47,7 @@ class IsPeConfig extends Config(
 
 class WithTopConfig extends Config(
   (site, here, tail) => {
-    case CuArraySize => (4, 4)
+    case CuArraySize => (2, 2)
   }
 )
 
