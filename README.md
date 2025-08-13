@@ -56,3 +56,4 @@ For those who do not want to use Chisel, we also provide the Verilog version in 
 However, we recommend the Chisel version, as it allows you to modify parameters and generate different hardware.
 
 ## How to cite?
+Lei Xu, Chen Yin, Zelong Yuan, Weiguang Sheng, Jianfei Jiang, Qin Wang, Naifeng Jing. Principle-based Dataflow Optimization for Communication Lower Bound in Operator-Fused Tensor Accelerator. In 62nd ACM/IEEE Design Automation Conference (DAC ’25).
